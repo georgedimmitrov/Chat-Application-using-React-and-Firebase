@@ -4,21 +4,32 @@ import useCollection from './utils/useCollection';
 import useDocWithCache from './useDocWithCache';
 import isSameDay from 'date-fns/is_same_day';
 
-function useChatScroll(ref) {
+function ChatScroller(props) {
+  const ref = useRef();
+  const shouldScrollRef = useRef(true);
+
   useEffect(() => {
-    const node = ref.current;
-    node.scrollTop = node.scrollHeight;
+    if (shouldScrollRef.current) {
+      const node = ref.current;
+      node.scrollTop = node.scrollHeight;
+    }
   });
+
+  const handleScroll = () => {
+    const node = ref.current;
+    const { scrollTop, clientHeight, scrollHeight } = node;
+    const atBottom = scrollHeight === clientHeight + scrollTop;
+    shouldScrollRef.current = atBottom;
+  };
+
+  return <div {...props} ref={ref} onScroll={handleScroll} />;
 }
 
 function Messages({ channelId }) {
   const messages = useCollection(`channels/${channelId}/messages`, 'createdAt');
 
-  const scrollerRef = useRef();
-  useChatScroll(scrollerRef);
-
   return (
-    <div ref={scrollerRef} className="Messages">
+    <ChatScroller className="Messages">
       <div className="EndOfMessages">That's every message!</div>
 
       {messages.map((message, index) => {
@@ -40,7 +51,7 @@ function Messages({ channelId }) {
           </div>
         );
       })}
-    </div>
+    </ChatScroller>
   );
 }
 
